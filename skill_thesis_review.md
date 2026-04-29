@@ -58,6 +58,31 @@ thesis/
 - **核心术语**: "Use ONLY 'three educational purposes' — never 'three domains' or 'three functions'"
 - **引用格式示例**: 提供 1-2 个正确示例，Agent 会模仿
 
+### 2.5 冲突解决协议
+
+当多个审核 Agent 的建议矛盾时，按以下优先级裁决：
+
+1. **理论一致性 > 可操作性** — 框架 Agent 的修改优先于实践 Agent
+2. **结构正确性 > 修辞优化** — RQ 一致性、数字准确性的修复优先于措辞改进
+3. **论文核心论点 > 边缘补充** — 优先保留最贴近论文核心论点的版本
+4. **当两个 Agent 修改同一段时** — 先应用结构修复，再叠加内容增强
+
+### 2.6 故障恢复
+
+每次 Agent 修改后：
+```bash
+# 1. 变更范围验证
+git diff --stat  # 确认只改了预期文件
+
+# 2. 重大修改前自动备份
+cp thesis.tex thesis.tex.bak.$(date +%Y%m%d_%H%M)
+
+# 3. 编译验证
+xelatex thesis.tex | grep -E "Error|Warning"
+```
+
+Agent 重试协议：最多 2 次。每次重试在 Prompt 中提供更具体的指令和当前文件的精确行号。两次失败后，改用手动修复。
+
 ---
 
 ## 3. Token 管理策略
@@ -143,7 +168,16 @@ diff <(grep cited references) <(grep reference list) → 引用匹配
 
 机械问题不浪费 Agent Token。Agent 应该只做**语义分析**（理论深度、论证质量、逻辑一致性）。
 
-### 3.7 Token 消耗估算（本轮实际经验）
+### 3.7 停止标准（何时可以提前结束）
+
+满足**任一**条件即可提前结束审核循环：
+1. 连续两轮无 HIGH 优先级发现
+2. 最新一轮发现 < 5 个（且全部为 LOW）
+3. 审核报告 > 80% 条目标记为 PASS（验证性检查）
+
+反之，如果最新一轮仍有 HIGH 优先级发现，则**必须继续下一轮**。
+
+### 3.8 Token 消耗估算（本轮实际经验）
 
 | 操作 | 消耗范围 | 频率 |
 |------|---------|------|
@@ -289,14 +323,22 @@ You must edit the file [Path] to implement the following fixes.
 Read the file first, then make ALL edits listed below.
 
 ## Fixes to apply:
-1. [Line XX] Change "A" to "B"
+1. [Line XX] Change "A" to "B"  (verify exact current text before editing)
 2. [Line XX] Add paragraph: "..."
+
+## DO NOT:
+- DO NOT paraphrase research questions — use EXACT text provided
+- DO NOT create new terms — use ONLY terms from the glossary below
+- DO NOT delete any content not explicitly listed for deletion
+- DO NOT change citation format — use EXACT format shown in examples
+- DO NOT edit lines outside the specified line ranges
+- DO NOT add commentary or explanations in the file
 
 ## Rules:
 - Keep ALL existing content not specifically changed
 - Use the EXACT citation format: Author (Year) or (Author, Year)
-- Use [specific format requirements]
-- Write the updated file to [Path]
+- Before editing line N, verify the current text matches the "Change FROM" instruction
+- If current text does not match, STOP and report the mismatch
 
 ## Context:
 - This is a thesis about [topic]
