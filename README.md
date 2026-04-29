@@ -4,7 +4,7 @@ A production-tested automation workflow for reviewing and revising academic thes
 
 ## What This Is
 
-A 5-round review framework that orchestrates multiple AI agents to review, critique, and revise an academic thesis from initial draft to submission-ready final manuscript. Developed and validated on a 36,400-word Master's thesis at the University of Auckland.
+A 5-round review framework that orchestrates multiple AI agents to review, critique, and revise an academic thesis from initial draft to submission-ready final manuscript. Developed and validated on a 36,400-word Master's thesis in education at a New Zealand university.
 
 ## Key Results (From Production Use)
 

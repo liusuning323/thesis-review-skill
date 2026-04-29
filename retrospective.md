@@ -1,7 +1,7 @@
 # 论文多轮审核项目完整复盘
 
-**项目**: 刘苏宁硕士论文 — "Generative AI in Chinese Vocational Education: A Systematic Literature Review Through Biesta's Educational Purposes"
-**大学**: The University of Auckland, 2026
+**项目**: 某教育学硕士论文 — 生成式人工智能在中国职业教育中的系统性文献综述（匿名化处理）
+**大学**: 新西兰某综合性大学, 2026
 **时间**: 2026-04-29 ~ 2026-04-30
 **最终成果**: 114 页 PDF, ~36,400 词, 5 轮审核, 100+ 问题修复, 0 编译错误
 
@@ -349,4 +349,4 @@ end tell
 ---
 
 *复盘时间: 2026-04-30*
-*项目原始文件: /Users/liusuning/Desktop/毕业论文章节/*
+*项目原始文件: 本地论文目录（匿名化）*
