@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "prompt": "我有一篇 35,000 词的 SLR 论文，LaTeX + xelatex，APA 7th，需要多轮审核。告诉我完整流程。",
+    "expected": "输出 5 轮 Phase 流程，包含 Agent 分工、每轮目标、检查清单"
+  },
+  {
+    "id": 2,
+    "prompt": "我的 Ch4 RQ 和 Ch1 RQ 不一样，两个审核 Agent 给了相反的建议，怎么办？",
+    "expected": "参考冲突解决协议，说明 RQ 对齐优先于修辞优化，给出具体操作"
+  },
+  {
+    "id": 3,
+    "prompt": "我的论文有中英混排，PDF 里中文全是空白括号。Token 也快不够了，怎么省？",
+    "expected": "给出 xeCJK 字体方案 + Token 管理 6 策略的具体操作命令"
+  }
+]

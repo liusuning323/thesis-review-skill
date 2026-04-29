@@ -1,3 +1,12 @@
+---
+name: thesis-review
+description: >
+  Production-tested 5-round academic thesis review framework using multi-agent collaboration.
+  For SLR theses with LaTeX, APA 7th, NZ English, and CJK support.
+  Triggers: thesis review, multi-round revision, academic writing, SLR, LaTeX compilation.
+version: 2.1
+---
+
 # Academic Thesis Multi-Round Review Framework
 
 A production-tested automation workflow for reviewing and revising academic theses (especially systematic literature reviews) using multi-agent collaboration.

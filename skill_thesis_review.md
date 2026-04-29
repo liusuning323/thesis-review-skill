@@ -1,4 +1,16 @@
-# 学术论文多轮审核自动化流程 v2.0
+---
+name: thesis-review
+description: >
+  学术论文多轮审核自动化流程。适用于系统性文献综述(SLR)从初稿到终稿的完整校改流程，
+  支持 LaTeX + xelatex + APA 7th + NZ English + 中英混排。触发词: 论文审核, thesis review,
+  多轮校改, SLR, Biesta framework, LaTeX 编译, 引用检查, 章节字数。
+version: 2.1
+target_audience: 研究生(硕士/博士)、学术写作辅导人员、需要多轮审核的论文作者
+prerequisites: Claude Code 或兼容多Agent环境, LaTeX (xelatex), Python 3.x
+token_cost: ~2.5M tokens (完整5轮) 或更少(使用隔离策略)
+---
+
+# 学术论文多轮审核自动化流程 v2.1
 
 ## 目录
 1. [适用场景](#1-适用场景)
@@ -429,19 +441,30 @@ grep -n "894\|2,354\|PRISMA" main.tex
 | 工具 | 用途 | Token 消耗 |
 |------|------|-----------|
 | `grep -n/-c` | 精确定位 + 统计 | ~200/次 |
-| Python 脚本 | 引用转换、文件组装、字数统计 | ~2,000/次 |
+| `scripts/citation_converter.py` | 引用格式转换 | ~2,000/次 |
+| `scripts/citation_matcher.py` | 引用双向检查 | ~500/次 |
+| `scripts/word_counter.py` | 章节字数统计 | ~500/次 |
+| `scripts/preflight_check.sh` | Phase 0 预检 | 0 LLM Token |
 | 子 Agent | 重型审核和修改 | 30K-130K/次 |
 | `xelatex` | PDF 编译 | 0 LLM Token |
 | Mail.app AppleScript | 邮件发送 | 0 LLM Token |
 
-### 核心 Python 脚本模板
+### 核心 Python 脚本
 
-```python
-# 引用格式转换 + 文件组装
-# 参见 /tmp/assemble_round3.py（本项目的实际脚本）
+所有脚本位于 `scripts/` 目录，可直接运行：
 
-# 字数统计 + 章节分布
-# 参见 Phase 5 最终分析脚本
+| 脚本 | 用途 | 用法 |
+|------|------|------|
+| `scripts/citation_converter.py` | natbib → 手动 APA 格式转换 | `python scripts/citation_converter.py thesis.tex --map citation_map.json` |
+| `scripts/word_counter.py` | 章节字数统计 | `python scripts/word_counter.py thesis.tex --json` |
+| `scripts/citation_matcher.py` | 引用↔参考文献双向检查 | `python scripts/citation_matcher.py thesis.tex` |
+| `scripts/preflight_check.sh` | Phase 0 自动化预检 | `bash scripts/preflight_check.sh thesis.tex` |
+
+自定义引用映射文件 `citation_map.json` 格式：
+```json
+{
+  "biesta2020": {"text": "Biesta (2020)", "paren": "Biesta, 2020"}
+}
 ```
 
 ---
@@ -452,6 +475,7 @@ grep -n "894\|2,354\|PRISMA" main.tex
 |------|------|------|
 | v1.0 | 2026-04-30 | 初版，基于某教育学硕士论文 5 轮审核流程验证 |
 | v2.0 | 2026-04-30 | 新增 Token 管理策略章节、问题解决表、工具链对比 |
+| v2.1 | 2026-04-30 | Darwin 进化: 冲突解决协议、故障恢复、停止标准、负面 Prompt 指令、YAML frontmatter、可执行脚本 |
 
 ## 相关文件
 
