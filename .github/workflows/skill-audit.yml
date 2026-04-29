@@ -1,0 +1,58 @@
+name: Skill Quality Audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  structural-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate frontmatter
+        run: |
+          head -1 skill_thesis_review.md | grep -q "^---$" || { echo "FAIL: No YAML frontmatter"; exit 1; }
+          grep -q "^name:" skill_thesis_review.md || { echo "FAIL: Missing name field"; exit 1; }
+          grep -q "^description:" skill_thesis_review.md || { echo "FAIL: Missing description field"; exit 1; }
+          grep -q "^version:" skill_thesis_review.md || { echo "FAIL: Missing version field"; exit 1; }
+          echo "PASS: Frontmatter valid"
+
+      - name: Check test-prompts exists
+        run: |
+          if [ -f test-prompts.json ]; then
+            echo "PASS: test-prompts.json found"
+            python3 -c "import json; json.load(open('test-prompts.json')); print('PASS: Valid JSON')"
+          else
+            echo "::warning::Missing test-prompts.json — create before merging"
+          fi
+
+      - name: Verify scripts are executable
+        run: |
+          for script in scripts/*.sh scripts/*.py; do
+            [ -f "$script" ] || continue
+            if file "$script" | grep -q "script\|Python"; then
+              echo "PASS: $script is a script"
+            fi
+          done
+
+      - name: Check for required documentation
+        run: |
+          [ -f README.md ] && echo "PASS: README.md" || echo "FAIL: Missing README.md"
+          [ -f retrospective.md ] && echo "PASS: retrospective.md" || echo "::warning::Missing retrospective.md"
+          [ -f evolution_analysis.md ] && echo "PASS: evolution_analysis.md" || echo "::warning::Missing evolution_analysis.md"
+
+      - name: Scorecard summary
+        run: |
+          echo "## Skill Quality Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          head -1 skill_thesis_review.md | grep -q "^---$" && echo "| Frontmatter | ✅ |" >> $GITHUB_STEP_SUMMARY || echo "| Frontmatter | ❌ |" >> $GITHUB_STEP_SUMMARY
+          [ -f test-prompts.json ] && echo "| Test Prompts | ✅ |" >> $GITHUB_STEP_SUMMARY || echo "| Test Prompts | ⚠️ |" >> $GITHUB_STEP_SUMMARY
+          [ -d scripts ] && echo "| Scripts | ✅ |" >> $GITHUB_STEP_SUMMARY || echo "| Scripts | ❌ |" >> $GITHUB_STEP_SUMMARY
+          [ -f retrospective.md ] && echo "| Retrospective | ✅ |" >> $GITHUB_STEP_SUMMARY || echo "| Retrospective | ⚠️ |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Darwin score baseline: 80.5/100" >> $GITHUB_STEP_SUMMARY

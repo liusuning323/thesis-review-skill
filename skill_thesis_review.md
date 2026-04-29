@@ -4,7 +4,7 @@ description: >
   学术论文多轮审核自动化流程。适用于系统性文献综述(SLR)从初稿到终稿的完整校改流程，
   支持 LaTeX + xelatex + APA 7th + NZ English + 中英混排。触发词: 论文审核, thesis review,
   多轮校改, SLR, Biesta framework, LaTeX 编译, 引用检查, 章节字数。
-version: 2.1
+version: 2.2
 target_audience: 研究生(硕士/博士)、学术写作辅导人员、需要多轮审核的论文作者
 prerequisites: Claude Code 或兼容多Agent环境, LaTeX (xelatex), Python 3.x
 token_cost: ~2.5M tokens (完整5轮) 或更少(使用隔离策略)
@@ -208,16 +208,40 @@ diff <(grep cited references) <(grep reference list) → 引用匹配
 
 ### Phase 0: 启动准备
 
+**核心原则: 验收标准先于执行。** 先定义"什么叫好"，再开始改论文。
+
 ```
+# Step 0: 定义验收标准（必须先做）
+[ ] 创建 test-prompts.json（3 个典型 prompt + expected 描述）
+      - Prompt 1: 最典型使用场景（happy path）
+      - Prompt 2: 复杂/歧义场景
+      - Prompt 3: 常见错误场景
+[ ] 从 Ch1 提取 RQ 原文（用于后续所有 Agent Prompt）
+[ ] 建立术语表（核心术语的标准表述 + 禁止替代词）
+
+# Step 1: 环境验证
 [ ] 确认论文初稿存在于指定路径
 [ ] 确认目标格式要求（字数、引用格式、语言标准）
-[ ] 读取论文全文（确认内容完整性）
-[ ] 列出所有依赖文件（图片、附录、bib 文件）
-[ ] 建立术语表（核心术语的标准表述）
-[ ] 提取 RQ 原文（用于后续 Prompt 粘贴）
 [ ] 首次编译测试（确认编译环境正常）
-[ ] 跑自动化检查脚本（grep 统计、引用匹配）
+[ ] 列出所有依赖文件（图片、附录、bib 文件）
+[ ] 检查图片文件大小（< 10KB 可能是占位图）
+
+# Step 2: 自动化预检（0 Agent Token）
+[ ] bash scripts/preflight_check.sh thesis.tex
+[ ] grep -c 检查关键短语重复
+[ ] python scripts/citation_matcher.py thesis.tex
+
+# Step 3: Darwin 基线评估
+[ ] 阅读论文全文（确认内容完整性）
+[ ] 按 Darwin 8 维度建立基线分数
+[ ] 记录到 baseline_evaluation.md
+[ ] 识别最弱维度，作为后续审核优先级
 ```
+
+**反模式（不要这样做）:**
+- ❌ 先启动 Agent 审核，后补验收标准 → test-prompts 必须在 Phase 0 创建
+- ❌ 跳过预检直接审核 → 机械问题浪费 Agent Token
+- ❌ 没有基线就开始改 → 不知道改好还是改坏了
 
 ### Phase 1: 第 1 轮 — 理论基础审核
 
@@ -469,6 +493,55 @@ grep -n "894\|2,354\|PRISMA" main.tex
 
 ---
 
+## 9. CI/CD 自动化验证
+
+每次 `git push` 自动运行结构审计：
+
+### GitHub Actions 工作流
+
+`.github/workflows/skill-audit.yml`:
+```yaml
+name: Skill Quality Audit
+on: [push, pull_request]
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run structural audit
+        run: bash scripts/preflight_check.sh
+      - name: Verify test prompts exist
+        run: |
+          if [ ! -f test-prompts.json ]; then
+            echo "::warning::Missing test-prompts.json — create before merging"
+          fi
+      - name: Validate frontmatter
+        run: |
+          head -1 skill_thesis_review.md | grep -q "^---$" || exit 1
+          grep -q "^name:" skill_thesis_review.md || exit 1
+          grep -q "^description:" skill_thesis_review.md || exit 1
+```
+
+### 本地 Git Hook（可选）
+
+`.git/hooks/pre-commit`:
+```bash
+#!/bin/bash
+# 每次 commit 前自动跑预检
+bash scripts/preflight_check.sh thesis.tex
+python scripts/citation_matcher.py thesis.tex
+```
+
+### Darwin 质量闸门
+
+合并 PR 前必须满足：
+1. `preflight_check.sh` 全绿
+2. `citation_matcher.py` 无 unmatched
+3. `test-prompts.json` 存在
+4. Darwin 总分 ≥ 上次评测分数（取 `baseline_evaluation.md` 中的记录）
+
+---
+
 ## 版本历史
 
 | 版本 | 日期 | 变更 |
@@ -476,6 +549,7 @@ grep -n "894\|2,354\|PRISMA" main.tex
 | v1.0 | 2026-04-30 | 初版，基于某教育学硕士论文 5 轮审核流程验证 |
 | v2.0 | 2026-04-30 | 新增 Token 管理策略章节、问题解决表、工具链对比 |
 | v2.1 | 2026-04-30 | Darwin 进化: 冲突解决协议、故障恢复、停止标准、负面 Prompt 指令、YAML frontmatter、可执行脚本 |
+| v2.2 | 2026-04-30 | 工作流重构: test-prompts 提前到 Phase 0 第一步、CI/CD 自动化验证、Darwin 基线前置 |
 
 ## 相关文件
 
